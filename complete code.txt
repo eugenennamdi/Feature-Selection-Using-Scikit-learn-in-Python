@@ -1,0 +1,50 @@
+# first, we import modules required.
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.feature_selection import SelectKBest,chi2,RFE
+from sklearn.ensemble import RandomForestClassifier
+
+#load our dataset into a dataframe using pandas
+df = pd.read_csv("data/Heart_Disease_Prediction.csv")
+print(df.shape)
+
+df.head(5)
+
+
+# storing the label column into a separate variable
+label = df["Heart Disease"]
+df.drop("Heart Disease", axis=1, inplace=True)
+
+
+print(label.value_counts())
+label.value_counts().plot(kind="bar")
+
+
+# changing the datatype to categorical
+categorical_features = ["Sex", "Chest pain type", "FBS over 120", "EKG results", "Exercise angina", "Slope of ST", "Number of vessels fluro", "Thallium"]
+df[categorical_features] = df[categorical_features].astype("category")
+
+
+# scale our continuous features using MinMaxScaler
+continuous_features = set(df.columns) - set(categorical_features)
+scaler = MinMaxScaler()
+df_norm = df.copy()
+df_norm[list(continuous_features)] = scaler.fit_transform(df[list(continuous_features)])
+
+
+# using the RFE (recursive feature estimation)
+rfe = RFE(estimator=RandomForestClassifier(), n_features_to_select=5)
+X_new = rfe.fit_transform(df_norm, label)
+X_new
+
+
+# using randomForest 
+clf = RandomForestClassifier()
+clf.fit(df_norm, label)
+# create a figure to plot a bar, where x axis is features, and Y indicating the importance of each feature
+plt.figure(figsize=(12,12))
+plt.bar(df_norm.columns, clf.feature_importances_)
+plt.xticks(rotation=45)
